@@ -1,0 +1,12 @@
+/* App-level styles */
+:host {
+    display: block;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+}
+
+/* Ensure full height layout */
+.h-screen {
+    height: 100vh;
+}

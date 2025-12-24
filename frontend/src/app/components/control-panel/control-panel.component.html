@@ -1,0 +1,108 @@
+<aside class="w-64 bg-surface-800 border-r border-surface-700 flex flex-col">
+    <!-- Header -->
+    <div class="p-4 border-b border-surface-700">
+        <h2 class="text-sm font-semibold text-surface-300 uppercase tracking-wider">Tools</h2>
+    </div>
+
+    <!-- Placement Tools -->
+    <div class="p-4 space-y-3">
+        <p class="text-xs text-surface-400 mb-2">Click to select, then click on canvas to place</p>
+
+        <!-- Add Queue Button -->
+        <button (click)="setMode('queue')"
+            class="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200" [class]="placementMode() === 'queue' 
+        ? 'bg-cyan-600/30 border-2 border-cyan-500 text-cyan-400' 
+        : 'bg-surface-700 hover:bg-surface-600 text-surface-200 border-2 border-transparent'">
+            <div class="w-10 h-10 rounded-lg bg-cyan-600/20 border-2 border-cyan-500 flex items-center justify-center">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+            </div>
+            <div class="text-left">
+                <div class="font-medium">Add Queue</div>
+                <div class="text-xs text-surface-400">Buffer for products</div>
+            </div>
+        </button>
+
+        <!-- Add Machine Button -->
+        <button (click)="setMode('machine')"
+            class="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200" [class]="placementMode() === 'machine' 
+        ? 'bg-primary-600/30 border-2 border-primary-500 text-primary-400' 
+        : 'bg-surface-700 hover:bg-surface-600 text-surface-200 border-2 border-transparent'">
+            <div
+                class="w-10 h-10 rounded-lg bg-primary-600/20 border-2 border-primary-500 flex items-center justify-center">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+            </div>
+            <div class="text-left">
+                <div class="font-medium">Add Machine</div>
+                <div class="text-xs text-surface-400">Processes products</div>
+            </div>
+        </button>
+
+        <!-- Connect Mode Button -->
+        <button (click)="setMode('connect')"
+            class="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200" [class]="placementMode() === 'connect' 
+        ? 'bg-emerald-600/30 border-2 border-emerald-500 text-emerald-400' 
+        : 'bg-surface-700 hover:bg-surface-600 text-surface-200 border-2 border-transparent'">
+            <div
+                class="w-10 h-10 rounded-lg bg-emerald-600/20 border-2 border-emerald-500 flex items-center justify-center">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                </svg>
+            </div>
+            <div class="text-left">
+                <div class="font-medium">Connect</div>
+                <div class="text-xs text-surface-400">Link elements</div>
+            </div>
+        </button>
+    </div>
+
+    <!-- Divider -->
+    <div class="border-t border-surface-700 mx-4"></div>
+
+    <!-- Selected Element Info -->
+    @if (selectedElement()) {
+    <div class="p-4">
+        <h3 class="text-sm font-semibold text-surface-300 uppercase tracking-wider mb-3">Selected</h3>
+        <div class="card p-4">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-sm font-medium text-surface-200">
+                    {{ selectedElement()?.type === 'queue' ? 'Queue' : 'Machine' }}
+                </span>
+                <span class="text-xs text-surface-400">{{ selectedElement()?.id }}</span>
+            </div>
+            <button (click)="deleteSelected()" class="w-full btn-danger text-sm py-2">
+                Delete Element
+            </button>
+        </div>
+    </div>
+    }
+
+    <!-- Help Section -->
+    <div class="mt-auto p-4 border-t border-surface-700">
+        <div class="card p-4 bg-surface-700/50">
+            <h4 class="text-sm font-medium text-surface-200 mb-2">How it works</h4>
+            <ul class="text-xs text-surface-400 space-y-1.5">
+                <li class="flex items-start gap-2">
+                    <span class="text-cyan-400">•</span>
+                    <span>Queues hold products waiting to be processed</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-primary-400">•</span>
+                    <span>Machines process one product at a time</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-emerald-400">•</span>
+                    <span>Connect queues to machines to create flow</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</aside>

@@ -1,1 +1,130 @@
-/* You can add global styles to this file, and also import other style files */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom CSS Variables */
+:root {
+  --color-primary: #14b8a6;
+  --color-secondary: #06b6d4;
+  --color-accent: #10b981;
+  --color-surface: #1e293b;
+  --color-background: #0f172a;
+}
+
+/* Base styles */
+body {
+  @apply bg-surface-900 text-surface-100 antialiased;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* Custom utility classes */
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface-900;
+  }
+
+  .btn-primary {
+    @apply btn bg-primary-500 text-white hover:bg-primary-600 focus:ring-primary-500 active:bg-primary-700;
+  }
+
+  .btn-secondary {
+    @apply btn bg-surface-700 text-surface-100 hover:bg-surface-600 focus:ring-surface-500 border border-surface-600;
+  }
+
+  .btn-danger {
+    @apply btn bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 active:bg-red-800;
+  }
+
+  .btn-icon {
+    @apply p-2 rounded-lg transition-all duration-200 hover:bg-surface-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-surface-900;
+  }
+
+  .card {
+    @apply bg-surface-800 rounded-xl border border-surface-700 shadow-lg;
+  }
+
+  .input {
+    @apply bg-surface-800 border border-surface-600 rounded-lg px-3 py-2 text-surface-100 placeholder-surface-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200;
+  }
+
+  /* Queue styling */
+  .queue-node {
+    @apply rounded-lg shadow-lg backdrop-blur-sm transition-all duration-300;
+    background-color: rgba(6, 182, 212, 0.2);
+    border: 2px solid #06b6d4;
+  }
+
+  .queue-node:hover {
+    border-color: #22d3ee;
+    box-shadow: 0 0 20px rgba(6, 182, 212, 0.2);
+  }
+
+  /* Machine styling */
+  .machine-node {
+    @apply rounded-lg shadow-lg backdrop-blur-sm transition-all duration-300;
+    background-color: rgba(20, 184, 166, 0.2);
+    border: 2px solid #14b8a6;
+  }
+
+  .machine-node:hover {
+    border-color: #2dd4bf;
+    box-shadow: 0 0 20px rgba(20, 184, 166, 0.2);
+  }
+
+  .machine-node.processing {
+    @apply animate-pulse;
+  }
+
+  .machine-node.flash {
+    animation: flash 0.5s ease-out;
+  }
+
+  /* Badge styling */
+  .badge {
+    @apply inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold rounded-full;
+  }
+
+  .badge-count {
+    @apply badge bg-primary-500 text-white;
+  }
+
+  .badge-time {
+    @apply badge bg-secondary-500 text-white;
+  }
+}
+
+/* Flash animation keyframes */
+@keyframes flash {
+  0% {
+    box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.7);
+    transform: scale(1);
+  }
+
+  50% {
+    box-shadow: 0 0 20px 10px rgba(20, 184, 166, 0.4);
+    transform: scale(1.05);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(20, 184, 166, 0);
+    transform: scale(1);
+  }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-surface-800;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-surface-600 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-surface-500;
+}
