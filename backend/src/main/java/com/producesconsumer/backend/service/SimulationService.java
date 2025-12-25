@@ -1,6 +1,7 @@
 package com.producesconsumer.backend.service;
 
 import com.producesconsumer.backend.model.*;
+import com.producesconsumer.backend.observer.QueueEventObserver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -15,7 +16,10 @@ public class SimulationService {
 
     private final EventService eventService;
     private final SimulationState state = new SimulationState();
-    
+
+    private final QueueService queueService;
+    private final QueueEventObserver queueEventObserver;
+
     private int queueCounter = 0;
     private int machineCounter = 0;
     private int connectionCounter = 0;
@@ -34,6 +38,11 @@ public class SimulationService {
         queue.setX(x);
         queue.setY(y);
         state.getQueues().add(queue);
+
+        // register observer for this queue
+        queueService.registerObserver(queueEventObserver);
+        log.info("Queue observer registered for queue: {}", queue.getId());
+
         log.info("Added queue: {}", queue.getId());
         broadcastState();
         return queue;
@@ -43,6 +52,10 @@ public class SimulationService {
         state.getQueues().removeIf(q -> q.getId().equals(id));
         state.getConnections().removeIf(c -> 
             c.getSourceId().equals(id) || c.getTargetId().equals(id));
+
+        queueService.unregisterObserver(queueEventObserver);
+        log.info("Queue observer unregistered for queue: {}", id);
+
         log.info("Deleted queue: {}", id);
         broadcastState();
     }
@@ -53,6 +66,45 @@ public class SimulationService {
             .findFirst()
             .ifPresent(q -> { q.setX(x); q.setY(y); });
         broadcastState();
+    }
+
+    public void addProductToQueue(String queueId, Product product) {
+        Queue queue = state.getQueues().stream()
+                .filter(q -> q.getId().equals(queueId))
+                .findFirst()
+                .orElse(null);
+
+        if (queue != null) {
+            queueService.addProductToQueue(queue, product);
+            log.info("Added product {} to queue {}", product.getId(), queueId);
+        } else {
+            log.warn("Queue not found: {}", queueId);
+        }
+    }
+
+    public Product removeProductFromQueue(String queueId) {
+        Queue queue = state.getQueues().stream()
+                .filter(q -> q.getId().equals(queueId))
+                .findFirst()
+                .orElse(null);
+
+        if (queue != null) {
+            Product product = queueService.removeProductFromQueue(queue);
+            if (product != null) {
+                log.info("Removed product {} from queue {}", product.getId(), queueId);
+            }
+            return product;
+        } else {
+            log.warn("Queue not found: {}", queueId);
+            return null;
+        }
+    }
+
+    public Queue getQueueById(String queueId) {
+        return state.getQueues().stream()
+                .filter(q -> q.getId().equals(queueId))
+                .findFirst()
+                .orElse(null);
     }
 
     // ==================== Machine Operations ====================

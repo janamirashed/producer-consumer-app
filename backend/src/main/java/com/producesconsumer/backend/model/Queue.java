@@ -5,9 +5,6 @@ import lombok.Data;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-/**
- * Queue element in the simulation - pure data model
- */
 @Data
 public class Queue {
     private String id;
