@@ -130,6 +130,19 @@ export class App implements OnInit, OnDestroy {
     });
   }
 
+  onDeleteSelected(): void {
+    const element = this.selectedElement();
+    if (element) {
+      this.onDeleteElement(element);
+    }
+  }
+
+  getSelectedElementLabel(): string {
+    const element = this.selectedElement();
+    if (!element) return '';
+    return element.type === 'queue' ? 'Queue' : 'Machine';
+  }
+
   // ==================== Canvas Handlers ====================
 
   onCanvasClick(position: { x: number; y: number }): void {
@@ -147,6 +160,10 @@ export class App implements OnInit, OnDestroy {
       this.handleConnectionSelection(element);
     } else {
       this.selectedElement.set(element);
+      // Selecting an element should deselect any placement mode
+      if (element) {
+        this.placementMode.set('none');
+      }
     }
   }
 

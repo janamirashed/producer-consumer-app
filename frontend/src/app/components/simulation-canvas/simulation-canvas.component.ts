@@ -55,6 +55,7 @@ export class SimulationCanvasComponent implements AfterViewInit, OnDestroy {
     private connectionLines = new Map<string, fabric.Group>();
     private flashTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
     private resizeObserver!: ResizeObserver;
+    private tempPositions = new Map<string, { x: number; y: number }>();
 
     private readonly QUEUE_COLOR = '#22c55e';
     private readonly MACHINE_COLOR = '#3b82f6';
@@ -136,7 +137,17 @@ export class SimulationCanvasComponent implements AfterViewInit, OnDestroy {
             this.onElementSelect.emit(null);
         });
 
-        // Handle object movement
+        // Handle object movement - update connections in real-time while dragging
+        this.canvas.on('object:moving', ({ target }) => {
+            const obj = target as CustomFabricObject;
+            if (obj && obj.data) {
+                // Update position in state temporarily for connection rendering
+                this.updateElementPositionTemp(obj.data.type, obj.data.id, obj.left || 0, obj.top || 0);
+                this.updateConnectionsLive();
+            }
+        });
+
+        // Handle object movement finished
         this.canvas.on('object:modified', ({ target }) => {
             const obj = target as CustomFabricObject;
             if (obj && obj.data) {
@@ -146,7 +157,6 @@ export class SimulationCanvasComponent implements AfterViewInit, OnDestroy {
                     x: obj.left || 0,
                     y: obj.top || 0,
                 });
-                this.updateConnections();
             }
         });
 
@@ -360,7 +370,7 @@ export class SimulationCanvasComponent implements AfterViewInit, OnDestroy {
         const path = new fabric.Path(pathData, {
             fill: '',
             stroke: this.CONNECTION_COLOR,
-            strokeWidth: 2,
+            strokeWidth: 4, // Slightly thicker for easier clicking
             selectable: false,
             evented: false,
         });
@@ -406,6 +416,82 @@ export class SimulationCanvasComponent implements AfterViewInit, OnDestroy {
 
     private updateConnections(): void {
         this.renderState(this.state());
+    }
+
+    private updateElementPositionTemp(type: 'queue' | 'machine', id: string, x: number, y: number): void {
+        this.tempPositions.set(`${type}-${id}`, { x, y });
+    }
+
+    private updateConnectionsLive(): void {
+        const state = this.state();
+        state.connections.forEach((conn) => this.renderConnectionLive(conn, state));
+        this.canvas.renderAll();
+    }
+
+    private renderConnectionLive(connection: Connection, state: SimulationState): void {
+        const sourceKey = `${connection.sourceType}-${connection.sourceId}`;
+        const targetKey = `${connection.targetType}-${connection.targetId}`;
+
+        // Use temp position if available, otherwise use state
+        let sourcePos = this.tempPositions.get(sourceKey)
+            ?? this.findElementPosition(connection.sourceId, connection.sourceType, state)
+            ?? undefined;
+
+        let targetPos = this.tempPositions.get(targetKey)
+            ?? this.findElementPosition(connection.targetId, connection.targetType, state)
+            ?? undefined;
+
+        if (!sourcePos || !targetPos) return;
+
+        const arrowGroup = this.connectionLines.get(connection.id);
+        if (!arrowGroup) return;
+
+        // Remove old and create new
+        this.canvas.remove(arrowGroup);
+
+        const x1 = sourcePos.x + 50;
+        const y1 = sourcePos.y;
+        const x2 = targetPos.x - 50;
+        const y2 = targetPos.y;
+
+        const dx = x2 - x1;
+        const curvature = Math.min(Math.abs(dx) * 0.5, 80);
+        const cp1x = x1 + curvature;
+        const cp1y = y1;
+        const cp2x = x2 - curvature;
+        const cp2y = y2;
+
+        const pathData = `M ${x1} ${y1} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${x2} ${y2}`;
+        const path = new fabric.Path(pathData, {
+            fill: '',
+            stroke: this.CONNECTION_COLOR,
+            strokeWidth: 2,
+            selectable: false,
+            evented: false,
+        });
+
+        const angle = Math.atan2(y2 - cp2y, x2 - cp2x);
+        const arrowHead = new fabric.Triangle({
+            width: 12,
+            height: 12,
+            fill: this.CONNECTION_COLOR,
+            left: x2,
+            top: y2,
+            angle: (angle * 180) / Math.PI + 90,
+            originX: 'center',
+            originY: 'center',
+            selectable: false,
+            evented: false,
+        });
+
+        const newGroup = new fabric.Group([path, arrowHead], {
+            selectable: false,
+            evented: false,
+        });
+
+        this.connectionLines.set(connection.id, newGroup);
+        this.canvas.add(newGroup);
+        this.canvas.sendObjectToBack(newGroup);
     }
 
     triggerFlash(machineId: string): void {

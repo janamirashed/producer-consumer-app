@@ -1,6 +1,6 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, Subject, catchError, of, delay } from 'rxjs';
+import { Observable, Subject, catchError, of, delay, map, tap } from 'rxjs';
 import {
     SimulationState,
     Queue,
@@ -19,9 +19,11 @@ export class SimulationService {
 
     // ========== MOCK MODE ==========
     // Set to false when backend is ready
-    private readonly MOCK_MODE = true;
+    private readonly MOCK_MODE = false;
     private mockSimulationInterval: ReturnType<typeof setInterval> | null = null;
-    private idCounter = 0;
+    private queueCounter = 0;
+    private machineCounter = 0;
+    private connectionCounter = 0;
 
     // Reactive state using signals
     private _state = signal<SimulationState>({
@@ -179,11 +181,19 @@ export class SimulationService {
         if (this.MOCK_MODE) {
             return of(this._state());
         }
-        return this.http.get<SimulationState>(`${this.API_BASE}/state`).pipe(
+        return this.http.get<ApiResponse<SimulationState>>(`${this.API_BASE}/state`).pipe(
             catchError((error) => {
                 console.error('Failed to load state:', error);
                 this._error.set('Failed to load simulation state');
-                return of(this._state());
+                return of({ success: false, data: this._state() });
+            })
+        ).pipe(
+            map((response) => {
+                if (response.success && response.data) {
+                    this._state.set(response.data);
+                    return response.data;
+                }
+                return this._state();
             })
         );
     }
@@ -191,7 +201,7 @@ export class SimulationService {
     /** Add a new queue at position */
     addQueue(x: number, y: number): Observable<ApiResponse<Queue>> {
         const newQueue: Queue = {
-            id: `Q${++this.idCounter}`,
+            id: `Q${++this.queueCounter}`,
             x,
             y,
             productCount: 0,
@@ -208,7 +218,7 @@ export class SimulationService {
     /** Add a new machine at position */
     addMachine(x: number, y: number): Observable<ApiResponse<Machine>> {
         const newMachine: Machine = {
-            id: `M${++this.idCounter}`,
+            id: `M${++this.machineCounter}`,
             x,
             y,
             state: 'idle',
@@ -231,7 +241,7 @@ export class SimulationService {
         targetType: 'queue' | 'machine'
     ): Observable<ApiResponse<Connection>> {
         const newConnection: Connection = {
-            id: `C${++this.idCounter}`,
+            id: `C${++this.connectionCounter}`,
             sourceId,
             sourceType,
             targetId,
@@ -335,7 +345,9 @@ export class SimulationService {
             this.stopMockSimulation();
             this._state.set(newState);
             this._snapshots.set([]);
-            this.idCounter = 0;
+            this.queueCounter = 0;
+            this.machineCounter = 0;
+            this.connectionCounter = 0;
             return of({ success: true, data: newState });
         }
         return this.http.post<ApiResponse<SimulationState>>(`${this.API_BASE}/new`, {});
@@ -375,7 +387,7 @@ export class SimulationService {
     createSnapshot(label?: string): Observable<ApiResponse<Snapshot>> {
         if (this.MOCK_MODE) {
             const snapshot: Snapshot = {
-                id: `SNAP${++this.idCounter}`,
+                id: `SNAP${this._snapshots().length + 1}`,
                 timestamp: new Date(),
                 label: label || `Snapshot ${this._snapshots().length + 1}`,
                 state: JSON.parse(JSON.stringify(this._state())), // Deep clone
