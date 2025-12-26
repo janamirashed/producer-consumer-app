@@ -50,7 +50,7 @@ public class MachineRunner implements Runnable, QueueObserver {
 
         while (running) {
             try {
-                // MACHINE CAN'T HAVE
+                // MACHINE CAN'T HAVE ZERO Qs as INPUT
                 if (inputQueues.isEmpty()) {
                     log.warn("Machine {} has no input queues connected. Stopping.", machine.getId());
                     running = false;

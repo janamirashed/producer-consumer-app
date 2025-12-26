@@ -26,8 +26,8 @@ public class InputGenerator implements Runnable {
     public void run() {
         while (running) {
             try {
-                // Generate products every 0.5-1 second (faster than machines can process)
-                int delay = 500 + random.nextInt(500);
+                // Generate products every 2-2.5 second (faster than machines can process)
+                int delay = 2000 + random.nextInt(500);
                 Thread.sleep(delay);
                 if (!running)
                     break;
