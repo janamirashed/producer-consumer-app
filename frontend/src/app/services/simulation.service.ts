@@ -92,6 +92,7 @@ export class SimulationService {
         this.eventSource.onmessage = (event) => {
             try {
                 const sseEvent: SSEEvent = JSON.parse(event.data);
+                console.log('[SSE] Received event:', sseEvent.type, sseEvent.data);
                 this.handleSSEEvent(sseEvent);
                 this._sseEvents.next(sseEvent);
             } catch (e) {
@@ -135,6 +136,21 @@ export class SimulationService {
 
             case 'QUEUE_UPDATE':
                 this.updateQueue(event.data as Queue);
+                break;
+
+            case 'QUEUE_EVENT':
+                // Handle queue events from QueueEventObserver (PRODUCT_ADDED, PRODUCT_REMOVED, QUEUE_EMPTY)
+                const queueEvent = event.data as { eventType: string; queueId: string; productId: string | null; productColor: string | null; newQueueSize: number };
+                console.log('[SSE] QUEUE_EVENT:', queueEvent.eventType, 'queue:', queueEvent.queueId, 'newSize:', queueEvent.newQueueSize);
+                console.log('[SSE] Current queues:', this._state().queues.map(q => ({ id: q.id, count: q.productCount })));
+                this._state.update((s) => ({
+                    ...s,
+                    queues: s.queues.map((q) =>
+                        q.id === queueEvent.queueId
+                            ? { ...q, productCount: queueEvent.newQueueSize }
+                            : q
+                    ),
+                }));
                 break;
 
             case 'MACHINE_UPDATE':
@@ -201,7 +217,7 @@ export class SimulationService {
     /** Add a new queue at position */
     addQueue(x: number, y: number): Observable<ApiResponse<Queue>> {
         const newQueue: Queue = {
-            id: `Q${++this.queueCounter}`,
+            id: `Q${this.queueCounter++}`,
             x,
             y,
             productCount: 0,

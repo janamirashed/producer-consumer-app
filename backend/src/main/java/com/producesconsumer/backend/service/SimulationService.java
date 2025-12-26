@@ -6,6 +6,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
+
 /**
  * Main simulation service - handles all state management and simulation control
  */
@@ -19,6 +26,9 @@ public class SimulationService {
 
     private final QueueService queueService;
     private final QueueEventObserver queueEventObserver;
+    private final MachineProcessingService machineProcessingService;
+    private InputGenerator inputGenerator;
+    private final ExecutorService generatorExecutor = Executors.newSingleThreadExecutor();
 
     private int queueCounter = 0;
     private int machineCounter = 0;
@@ -34,7 +44,7 @@ public class SimulationService {
 
     public Queue addQueue(double x, double y) {
         Queue queue = new Queue();
-        queue.setId("Q" + (++queueCounter));
+        queue.setId("Q" + (queueCounter++));
         queue.setX(x);
         queue.setY(y);
         state.getQueues().add(queue);
@@ -50,8 +60,7 @@ public class SimulationService {
 
     public void deleteQueue(String id) {
         state.getQueues().removeIf(q -> q.getId().equals(id));
-        state.getConnections().removeIf(c -> 
-            c.getSourceId().equals(id) || c.getTargetId().equals(id));
+        state.getConnections().removeIf(c -> c.getSourceId().equals(id) || c.getTargetId().equals(id));
 
         queueService.unregisterObserver(queueEventObserver);
         log.info("Queue observer unregistered for queue: {}", id);
@@ -62,9 +71,12 @@ public class SimulationService {
 
     public void updateQueuePosition(String id, double x, double y) {
         state.getQueues().stream()
-            .filter(q -> q.getId().equals(id))
-            .findFirst()
-            .ifPresent(q -> { q.setX(x); q.setY(y); });
+                .filter(q -> q.getId().equals(id))
+                .findFirst()
+                .ifPresent(q -> {
+                    q.setX(x);
+                    q.setY(y);
+                });
         broadcastState();
     }
 
@@ -115,7 +127,7 @@ public class SimulationService {
         machine.setX(x);
         machine.setY(y);
         machine.setState("idle");
-        machine.setProcessingTime(1000 + (int)(Math.random() * 4000));
+        machine.setProcessingTime(3000 + (int) (Math.random() * 4000)); // 3-7 seconds
         state.getMachines().add(machine);
         log.info("Added machine: {}", machine.getId());
         broadcastState();
@@ -124,24 +136,26 @@ public class SimulationService {
 
     public void deleteMachine(String id) {
         state.getMachines().removeIf(m -> m.getId().equals(id));
-        state.getConnections().removeIf(c -> 
-            c.getSourceId().equals(id) || c.getTargetId().equals(id));
+        state.getConnections().removeIf(c -> c.getSourceId().equals(id) || c.getTargetId().equals(id));
         log.info("Deleted machine: {}", id);
         broadcastState();
     }
 
     public void updateMachinePosition(String id, double x, double y) {
         state.getMachines().stream()
-            .filter(m -> m.getId().equals(id))
-            .findFirst()
-            .ifPresent(m -> { m.setX(x); m.setY(y); });
+                .filter(m -> m.getId().equals(id))
+                .findFirst()
+                .ifPresent(m -> {
+                    m.setX(x);
+                    m.setY(y);
+                });
         broadcastState();
     }
 
     // ==================== Connection Operations ====================
 
     public Connection addConnection(String sourceId, String sourceType,
-                                    String targetId, String targetType) {
+            String targetId, String targetType) {
         Connection connection = new Connection();
         connection.setId("C" + (++connectionCounter));
         connection.setSourceId(sourceId);
@@ -165,12 +179,54 @@ public class SimulationService {
     public void startSimulation() {
         state.setRunning(true);
         log.info("Simulation started");
+
+        // Map setup for search
+        Map<String, Queue> queueMap = state.getQueues().stream().collect(Collectors.toMap(Queue::getId, q -> q));
+
+        // Start machines(processing)
+        for (Machine machine : state.getMachines()) {
+            List<Queue> inputQueues = state.getConnections().stream()// stream of connections
+                    .filter(c -> c.getTargetId().equals(machine.getId())) // only connections that end at this machine
+                    .map(c -> queueMap.get(c.getSourceId())) // connection -> queue
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+
+            List<Queue> outputQueues = state.getConnections().stream()// stream of connections
+                    .filter(c -> c.getSourceId().equals(machine.getId())) // connections that START at this machine
+                    .map(c -> queueMap.get(c.getTargetId())) // get the target queue
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+
+            log.info("Starting machine {} with {} input queues and {} output queues",
+                    machine.getId(), inputQueues.size(), outputQueues.size());
+            machineProcessingService.startProcessing(machine, inputQueues, outputQueues);
+        }
+
+        // Input generation(source Q0)
+        Queue q0 = queueMap.get("Q0");
+
+        if (q0 != null) {
+            inputGenerator = new InputGenerator(q0, queueService);
+            generatorExecutor.submit(inputGenerator);
+        } else {
+            log.warn("Q0 not found! No products will be generated.");
+        }
+
         eventService.publishEvent(new SSE("SIMULATION_STARTED", null));
         broadcastState();
     }
 
     public void stopSimulation() {
         state.setRunning(false);
+
+        // Stop Machines
+        machineProcessingService.stopAll();
+
+        // Stop generator
+        if (inputGenerator != null) {
+            inputGenerator.stop();
+        }
+
         log.info("Simulation stopped");
         eventService.publishEvent(new SSE("SIMULATION_STOPPED", null));
         broadcastState();
@@ -197,5 +253,9 @@ public class SimulationService {
 
     public void broadcastMachineFlash(String machineId) {
         eventService.publishEvent(new SSE("MACHINE_FLASH", machineId));
+    }
+
+    public void broadcastMachineUpdate(Machine machine) {
+        eventService.publishEvent(new SSE("MACHINE_UPDATE", machine));
     }
 }

@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-
 /// manages all queue operations and observer notifications
 /// handles product addition/removal and notifies all registered observers
 
@@ -19,7 +18,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @RequiredArgsConstructor
 public class QueueService {
 
-    private final EventService eventService;
     private final List<QueueObserver> observers = new CopyOnWriteArrayList<>();
 
     /// register an observer to be notified of queue changes
@@ -54,11 +52,8 @@ public class QueueService {
             log.info("Product {} added to queue {}. New size: {}",
                     product.getId(), queue.getId(), queue.getProductCount());
 
-            // notify all observers
+            // notify all observers (QueueEventObserver will publish SSE)
             notifyObserversProductAdded(queue, product);
-
-            // publish SSE event for frontend
-            publishQueueUpdateEvent(queue, "PRODUCT_ADDED");
 
         } catch (Exception e) {
             log.error("Error adding product to queue: {}", e.getMessage(), e);
@@ -87,11 +82,8 @@ public class QueueService {
             log.info("Product {} removed from queue {}. New size: {}",
                     product.getId(), queue.getId(), queue.getProductCount());
 
-            // notify all observers
+            // notify all observers (QueueEventObserver will publish SSE)
             notifyObserversProductRemoved(queue, product);
-
-            // publish SSE event for frontend
-            publishQueueUpdateEvent(queue, "PRODUCT_REMOVED");
 
             // check if queue is empty
             if (queue.getProducts().isEmpty()) {
@@ -133,7 +125,6 @@ public class QueueService {
         queue.setProductCount(0);
         log.info("Queue {} cleared", queue.getId());
         notifyObserversQueueEmpty(queue);
-        publishQueueUpdateEvent(queue, "QUEUE_CLEARED");
     }
 
     /// private notification methods
@@ -171,42 +162,4 @@ public class QueueService {
         }
     }
 
-    /// publish queue update event via SSE
-    private void publishQueueUpdateEvent(Queue queue, String action) {
-        try {
-            QueueUpdatePayload payload = new QueueUpdatePayload(
-                    queue.getId(),
-                    queue.getX(),
-                    queue.getY(),
-                    queue.getProductCount(),
-                    queue.getProducts(),
-                    action
-            );
-            eventService.publishEvent(
-                    new com.producesconsumer.backend.model.SSE("QUEUE_UPDATE", payload)
-            );
-        } catch (Exception e) {
-            log.error("Error publishing queue update event: {}", e.getMessage(), e);
-        }
-    }
-
-    /// inner class for queue update payload sent via SSE
-    public static class QueueUpdatePayload {
-        public String id;
-        public double x;
-        public double y;
-        public int productCount;
-        public List<Product> products;
-        public String action;
-
-        public QueueUpdatePayload(String id, double x, double y, int productCount,
-                                  List<Product> products, String action) {
-            this.id = id;
-            this.x = x;
-            this.y = y;
-            this.productCount = productCount;
-            this.products = products;
-            this.action = action;
-        }
-    }
 }

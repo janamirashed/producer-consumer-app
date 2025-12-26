@@ -64,6 +64,7 @@ export interface Snapshot {
 export type SSEEventType =
     | 'STATE_UPDATE'
     | 'QUEUE_UPDATE'
+    | 'QUEUE_EVENT'
     | 'MACHINE_UPDATE'
     | 'MACHINE_FLASH'
     | 'PRODUCT_ADDED'

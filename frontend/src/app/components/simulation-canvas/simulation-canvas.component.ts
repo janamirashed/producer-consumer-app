@@ -414,10 +414,6 @@ export class SimulationCanvasComponent implements AfterViewInit, OnDestroy {
         }
     }
 
-    private updateConnections(): void {
-        this.renderState(this.state());
-    }
-
     private updateElementPositionTemp(type: 'queue' | 'machine', id: string, x: number, y: number): void {
         this.tempPositions.set(`${type}-${id}`, { x, y });
     }
