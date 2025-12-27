@@ -3,6 +3,7 @@ package com.producesconsumer.backend.model;
 import lombok.Data;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -18,9 +19,9 @@ public class SimulationState {
     private String simulationId;
 
     public SimulationState() {
-        this.queues = new CopyOnWriteArrayList<>();
-        this.machines = new CopyOnWriteArrayList<>();
-        this.connections = new CopyOnWriteArrayList<>();
+        this.queues = new ArrayList<>();
+        this.machines = new ArrayList<>();
+        this.connections = new ArrayList<>();
         this.isRunning = false;
     }
 
