@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 /**
  * Machine processing service - single responsibility: Machine thread execution
@@ -19,7 +20,8 @@ import java.util.concurrent.ExecutorService;
 public class MachineProcessingService {
 
     private final ExecutorService executorService;
-    private final Map<String, MachineRunner> activeRunners = new ConcurrentHashMap<>(); // handles multiple threads
+    private final Map<String, Future<?>> activeRunners = new ConcurrentHashMap<>(); // handles multiple threads
+    private final Map<String, MachineRunner> runnerObjects = new ConcurrentHashMap<>(); // handles multiple threads
                                                                                         // accessing it at the same time
 
     private final QueueService queueService;
@@ -42,22 +44,32 @@ public class MachineProcessingService {
         }
         MachineRunner runner = new MachineRunner(
                 machine, inputs, outputs, queueService, simulationService);
-        activeRunners.put(machine.getId(), runner);
-        executorService.submit(runner);
+        runnerObjects.put(machine.getId(), runner);
+        Future<?> future = executorService.submit(runner);
+        activeRunners.put(machine.getId(), future);
     }
 
     /**
      * Stop processing on a machine
      */
     public void stopProcessing(Machine machine) {
-        // TODO: Implement
+        Future<?> future = activeRunners.remove(machine.getId());
+        if (future != null) {
+            future.cancel(true);
+        }
+        MachineRunner runner = runnerObjects.remove(machine.getId());
+        if (runner != null) {
+            runner.stop();
+        }
     }
 
     /**
      * Stop all machine processing
      */
     public void stopAll() {
-        activeRunners.values().forEach(MachineRunner::stop);
+        activeRunners.values().forEach(future -> future.cancel(true));
+        runnerObjects.values().forEach(MachineRunner::stop);
         activeRunners.clear();
+        runnerObjects.clear();
     }
 }

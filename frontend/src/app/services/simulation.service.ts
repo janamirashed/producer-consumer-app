@@ -36,12 +36,14 @@ export class SimulationService {
     private _snapshots = signal<Snapshot[]>([]);
     private _isConnected = signal<boolean>(false);
     private _error = signal<string | null>(null);
+    private _isReplaying = signal<boolean>(false); // flag for UI state
 
     // Public readonly signals
     readonly state = this._state.asReadonly();
     readonly snapshots = this._snapshots.asReadonly();
     readonly isConnected = this._isConnected.asReadonly();
     readonly error = this._error.asReadonly();
+    readonly isReplaying = this._isReplaying.asReadonly();
 
     // Computed values
     readonly queues = computed(() => this._state().queues);
@@ -58,7 +60,9 @@ export class SimulationService {
     private _machineFlash = new Subject<string>();
     readonly machineFlash$ = this._machineFlash.asObservable();
 
-    constructor(private http: HttpClient) { }
+    constructor(private http: HttpClient) {
+        this.loadSnapshots();
+    }
 
     // ==================== SSE Connection ====================
 
@@ -331,21 +335,40 @@ export class SimulationService {
     /** Start the simulation */
     startSimulation(): Observable<ApiResponse<void>> {
         if (this.MOCK_MODE) {
-            this._state.update((s) => ({ ...s, isRunning: true }));
+            this._state.update((s) => ({ ...s, isRunning: true })); // Keep for mock mode
             this.startMockSimulation();
             return of({ success: true });
         }
+        // Optimistic update for UI responsiveness
+        this._state.update(s => ({ ...s, isRunning: true }));
+
         return this.http.post<ApiResponse<void>>(`${this.API_BASE}/start`, {});
     }
 
     /** Stop the simulation */
     stopSimulation(): Observable<ApiResponse<void>> {
         if (this.MOCK_MODE) {
-            this._state.update((s) => ({ ...s, isRunning: false }));
+            this._state.update((s) => ({ ...s, isRunning: false })); // Keep for mock mode
             this.stopMockSimulation();
             return of({ success: true });
         }
+        // Optimistic update for UI responsiveness
+        this._state.update(s => ({ ...s, isRunning: false }));
+
         return this.http.post<ApiResponse<void>>(`${this.API_BASE}/stop`, {});
+    }
+
+    /** Restart simulation (clear counts and start) */
+    restartSimulation(): Observable<ApiResponse<void>> {
+        if (this.MOCK_MODE) {
+            this.stopMockSimulation();
+            this._state.update(s => ({ ...s, queues: s.queues.map(q => ({ ...q, productCount: 0 })), machines: s.machines.map(m => ({ ...m, productCount: 0 })), isRunning: true }));
+            this.startMockSimulation();
+            return of({ success: true });
+        }
+        // Optimistic update
+        this._state.update(s => ({ ...s, isRunning: true }));
+        return this.http.post<ApiResponse<void>>(`${this.API_BASE}/restart`, {});
     }
 
     /** Reset and start new simulation */
@@ -377,25 +400,43 @@ export class SimulationService {
             // Already have local snapshots
             return;
         }
-        this.http.get<Snapshot[]>(`${this.API_BASE}/snapshots`).subscribe({
-            next: (snapshots) => this._snapshots.set(snapshots),
+        this.http.get<ApiResponse<Snapshot[]>>(`${this.API_BASE}/snapshots`).subscribe({
+            next: (response) => {
+                if (response.success && response.data) {
+                    this._snapshots.set(response.data);
+                }
+            },
             error: (err) => console.error('Failed to load snapshots:', err),
         });
     }
 
     /** Replay from a specific snapshot */
-    replaySnapshot(snapshotId: string): Observable<ApiResponse<SimulationState>> {
+    replaySnapshot(snapshotLabel: string): Observable<ApiResponse<SimulationState>> {
         if (this.MOCK_MODE) {
-            const snapshot = this._snapshots().find((s) => s.id === snapshotId);
+            const snapshot = this._snapshots().find((s) => s.label === snapshotLabel);
             if (snapshot) {
                 this.stopMockSimulation();
-                this._state.set({ ...snapshot.state });
+                this._state.set({ ...snapshot.state! });
             }
             return of({ success: true, data: this._state() });
         }
         return this.http.post<ApiResponse<SimulationState>>(
-            `${this.API_BASE}/snapshots/${snapshotId}/replay`,
+            `${this.API_BASE}/snapshots/${encodeURIComponent(snapshotLabel)}/replay`,
             {}
+        ).pipe(
+            tap(response => {
+                if (response.success && response.data) {
+                    console.log('[Snapshot] Replay successful, updating state:', response.data);
+                    this._isReplaying.set(true);
+                    this._state.set(response.data);
+                } else {
+                    console.error('[Snapshot] Replay failed:', (response as any).message || 'Unknown error');
+                }
+            }),
+            catchError(err => {
+                console.error('[Snapshot] HTTP error during replay:', err);
+                return of({ success: false, data: undefined, message: 'Replay failed' } as ApiResponse<SimulationState>);
+            })
         );
     }
 
@@ -411,7 +452,14 @@ export class SimulationService {
             this._snapshots.update((s) => [...s, snapshot]);
             return of({ success: true, data: snapshot });
         }
-        return this.http.post<ApiResponse<Snapshot>>(`${this.API_BASE}/snapshots`, { label });
+        const snapshotLabel = label || `Snapshot_${new Date().getTime()}`;
+        return this.http.post<ApiResponse<Snapshot>>(`${this.API_BASE}/snapshots`, { label: snapshotLabel }).pipe(
+            tap(response => {
+                if (response.success) {
+                    this.loadSnapshots();
+                }
+            })
+        );
     }
 
     // ==================== Mock Simulation ====================
@@ -563,5 +611,19 @@ export class SimulationService {
             machines: s.machines.filter((m) => m.id !== id),
             connections: s.connections.filter((c) => c.sourceId !== id && c.targetId !== id),
         }));
+    }
+
+    /** Restore the state from before the replay started */
+    restoreLiveState(): void {
+        this.http.post<ApiResponse<SimulationState>>(`${this.API_BASE}/restore-live`, {}).subscribe({
+            next: (response) => {
+                if (response.success && response.data) {
+                    this._state.set(response.data);
+                    this._isReplaying.set(false);
+                    console.log('[Snapshot] Returned to live state from backend');
+                }
+            },
+            error: (err) => console.error('[Snapshot] Restore live state failed:', err)
+        });
     }
 }

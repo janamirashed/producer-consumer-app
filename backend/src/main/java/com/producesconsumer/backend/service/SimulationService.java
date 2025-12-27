@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
@@ -27,12 +28,14 @@ public class SimulationService {
     private final QueueService queueService;
     private final QueueEventObserver queueEventObserver;
     private final MachineProcessingService machineProcessingService;
-    private InputGenerator inputGenerator;
+    private InputGenerator currentGenerator;
+    private Future<?> generatorFuture;
     private final ExecutorService generatorExecutor = Executors.newSingleThreadExecutor();
 
     private int queueCounter = 0;
     private int machineCounter = 0;
     private int connectionCounter = 0;
+    private SimulationSnapshot liveSessionBackup;
 
     // ==================== State Access ====================
 
@@ -206,8 +209,8 @@ public class SimulationService {
         Queue q0 = queueMap.get("Q0");
 
         if (q0 != null) {
-            inputGenerator = new InputGenerator(q0, queueService);
-            generatorExecutor.submit(inputGenerator);
+            currentGenerator = new InputGenerator(q0, queueService);
+            generatorFuture = generatorExecutor.submit(currentGenerator);
         } else {
             log.warn("Q0 not found! No products will be generated.");
         }
@@ -223,8 +226,12 @@ public class SimulationService {
         machineProcessingService.stopAll();
 
         // Stop generator
-        if (inputGenerator != null) {
-            inputGenerator.stop();
+        if (currentGenerator != null) {
+            currentGenerator.stop();
+        }
+        if (generatorFuture != null) {
+            generatorFuture.cancel(true);
+            generatorFuture = null;
         }
 
         log.info("Simulation stopped");
@@ -240,14 +247,63 @@ public class SimulationService {
         queueCounter = 0;
         machineCounter = 0;
         connectionCounter = 0;
+        liveSessionBackup = null;
         log.info("New simulation created");
         broadcastState();
         return state;
     }
 
+    public void backupLiveState() {
+        // Save current state including running status
+        this.liveSessionBackup = state.saveToSnapshot("_internal_backup", true);
+        log.info("Live session backed up");
+    }
+
+    public SimulationState restoreLiveState() {
+        if (liveSessionBackup != null) {
+            log.info("Restoring live session from backup");
+            boolean wasRunning = liveSessionBackup.getState().isRunning();
+
+            // Stop any current replay before restoring
+            stopSimulation();
+
+            // Load state preserving the 'wasRunning' flag
+            state.loadFromSnapshot(liveSessionBackup, true);
+
+            if (wasRunning) {
+                log.info("Resuming simulation threads after restoration");
+                startSimulation();
+            } else {
+                broadcastState();
+            }
+            return state;
+        }
+        log.warn("No live session backup found to restore");
+        return state;
+    }
+
+    public void restartSimulation() {
+        log.info("Restarting simulation: stopping and clearing counts");
+        stopSimulation();
+
+        // Clear product counts from queues and machines
+        for (Queue queue : state.getQueues()) {
+            queue.setProductCount(0);
+            queue.getProducts().clear();
+        }
+        for (Machine machine : state.getMachines()) {
+            machine.setProductCount(0);
+            machine.setCurrentProductColor(null);
+            machine.setState("idle");
+        }
+
+        // Start again
+        startSimulation();
+    }
+
     // ==================== Event Broadcasting ====================
 
-    private void broadcastState() {
+    public void broadcastState() {
         eventService.publishEvent(new SSE("STATE_UPDATE", state));
     }
 

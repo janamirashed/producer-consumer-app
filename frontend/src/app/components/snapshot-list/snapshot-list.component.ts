@@ -17,8 +17,8 @@ export class SnapshotListComponent {
     onClose = output<void>();
     onCreate = output<void>();
 
-    selectSnapshot(id: string): void {
-        this.onSelect.emit(id);
+    selectSnapshot(label: string): void {
+        this.onSelect.emit(label);
     }
 
     close(): void {

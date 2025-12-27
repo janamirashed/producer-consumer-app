@@ -55,9 +55,9 @@ export interface SimulationState {
 /** Snapshot for replay functionality */
 export interface Snapshot {
     id: string;
-    timestamp: Date;
-    label?: string;
-    state: SimulationState;
+    timestamp: Date | string;
+    label: string;
+    state?: SimulationState;
 }
 
 /** SSE Event types from backend */
@@ -93,5 +93,6 @@ export interface SelectedElement {
 export interface ApiResponse<T> {
     success: boolean;
     data?: T;
+    message?: string;
     error?: string;
 }

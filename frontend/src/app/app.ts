@@ -39,6 +39,12 @@ export class App implements OnInit, OnDestroy {
   get isConnected() {
     return this.simulationService.isConnected;
   }
+  get isReplaying() {
+    return this.simulationService.isReplaying;
+  }
+  get error() {
+    return this.simulationService.error;
+  }
   get snapshots() {
     return this.simulationService.snapshots;
   }
@@ -87,12 +93,7 @@ export class App implements OnInit, OnDestroy {
   }
 
   onRestart(): void {
-    // Stop current simulation and start fresh
-    this.simulationService.stopSimulation().subscribe({
-      next: () => {
-        this.simulationService.startSimulation().subscribe();
-      },
-    });
+    this.simulationService.restartSimulation().subscribe();
   }
 
   onNewSimulation(): void {
@@ -105,8 +106,8 @@ export class App implements OnInit, OnDestroy {
     });
   }
 
-  onReplay(snapshotId: string): void {
-    this.simulationService.replaySnapshot(snapshotId).subscribe();
+  onReplay(snapshotLabel: string): void {
+    this.simulationService.replaySnapshot(snapshotLabel).subscribe();
   }
 
   // ==================== Control Panel Handlers ====================
@@ -174,15 +175,20 @@ export class App implements OnInit, OnDestroy {
   // ==================== Snapshot Handlers ====================
 
   toggleSnapshotList(): void {
-    this.showSnapshotList.update((v) => !v);
+    const nextValue = !this.showSnapshotList();
+    if (nextValue) {
+      this.simulationService.loadSnapshots();
+    }
+    this.showSnapshotList.set(nextValue);
   }
 
-  onSnapshotSelect(snapshotId: string): void {
-    this.simulationService.replaySnapshot(snapshotId).subscribe({
-      next: () => {
-        this.showSnapshotList.set(false);
-      },
-    });
+  onSnapshotSelect(snapshotLabel: string): void {
+    this.simulationService.replaySnapshot(snapshotLabel).subscribe();
+    this.showSnapshotList.set(false);
+  }
+
+  onReturnToLive(): void {
+    this.simulationService.restoreLiveState();
   }
 
   onSnapshotCreate(): void {

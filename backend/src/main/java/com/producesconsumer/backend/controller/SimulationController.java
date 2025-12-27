@@ -83,7 +83,7 @@ public class SimulationController {
     @PostMapping("/connections")
     public ApiResponse<Connection> addConnection(@RequestBody ConnectionRequest request) {
         return ApiResponse.success(simulationService.addConnection(
-                request.getSourceId(), request.getSourceType(), 
+                request.getSourceId(), request.getSourceType(),
                 request.getTargetId(), request.getTargetType()));
     }
 
@@ -112,6 +112,12 @@ public class SimulationController {
         return ApiResponse.success(simulationService.newSimulation());
     }
 
+    @PostMapping("/restart")
+    public ApiResponse<Void> restartSimulation() {
+        simulationService.restartSimulation();
+        return ApiResponse.success(null);
+    }
+
     // ==================== Snapshots ====================
 
     @GetMapping("/snapshots")
@@ -125,16 +131,25 @@ public class SimulationController {
         return ApiResponse.success(snapshotService.saveSnapshot(label));
     }
 
-//    @PostMapping("/snapshots/{id}/replay")
-//    public ApiResponse<SimulationState> replaySnapshot(@PathVariable String id) {
-//        return snapshotService.getSnapshot(id)
-//                .map(snapshot -> ApiResponse.success(snapshot.getState()))
-//                .orElse(ApiResponse.error("SimulationSnapshot not found"));
-//    }
+    // @PostMapping("/snapshots/{id}/replay")
+    // public ApiResponse<SimulationState> replaySnapshot(@PathVariable String id) {
+    // return snapshotService.getSnapshot(id)
+    // .map(snapshot -> ApiResponse.success(snapshot.getState()))
+    // .orElse(ApiResponse.error("SimulationSnapshot not found"));
+    // }
     @PostMapping("/snapshots/{label}/replay")
     public ApiResponse<SimulationState> replaySnapshot(@PathVariable String label) {
+        simulationService.backupLiveState(); // save current session before replaying
+        simulationService.stopSimulation(); // kill all threads before replaying
         snapshotService.loadSnapshot(label);
+        simulationService.broadcastState(); // send new state to all SSE clients
         SimulationState state = simulationService.getState();
+        return ApiResponse.success(state);
+    }
+
+    @PostMapping("/restore-live")
+    public ApiResponse<SimulationState> restoreLiveState() {
+        SimulationState state = simulationService.restoreLiveState();
         return ApiResponse.success(state);
     }
 }

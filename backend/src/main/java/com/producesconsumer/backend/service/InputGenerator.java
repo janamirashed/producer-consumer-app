@@ -24,11 +24,12 @@ public class InputGenerator implements Runnable {
 
     @Override
     public void run() {
-        while (running) {
+        while (running && !Thread.currentThread().isInterrupted()) {
             try {
                 // Generate products every 2-2.5 second (faster than machines can process)
                 int delay = 2000 + random.nextInt(500);
                 Thread.sleep(delay);
+
                 if (!running)
                     break;
 
@@ -37,13 +38,13 @@ public class InputGenerator implements Runnable {
                 product.setId("PROD-" + System.nanoTime());
                 product.setColor(generateRandomHexColor());
 
-                // Put product in Q0
+                // Put product in target queue
                 queueService.addProductToQueue(targetQueue, product);
                 log.info("Generated Product {} into Queue {}", product.getId(), targetQueue.getId());
+
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                running = false;
-
+                break;
             }
         }
         log.info("InputGenerator Stopped");
