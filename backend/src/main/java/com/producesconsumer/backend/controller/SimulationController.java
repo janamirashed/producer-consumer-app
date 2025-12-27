@@ -115,20 +115,26 @@ public class SimulationController {
     // ==================== Snapshots ====================
 
     @GetMapping("/snapshots")
-    public ApiResponse<List<Snapshot>> getSnapshots() {
-        return ApiResponse.success(snapshotService.getSnapshots());
+    public ApiResponse<List<SnapshotInfo>> getSnapshotsInfo() {
+        return ApiResponse.success(snapshotService.getSnapshotsInfo());
     }
 
     @PostMapping("/snapshots")
-    public ApiResponse<Snapshot> createSnapshot(@RequestBody(required = false) SnapshotRequest request) {
+    public ApiResponse<SimulationSnapshot> createSnapshot(@RequestBody(required = false) SnapshotRequest request) {
         String label = request != null ? request.getLabel() : null;
-        return ApiResponse.success(snapshotService.createSnapshot(simulationService.getState(), label));
+        return ApiResponse.success(snapshotService.saveSnapshot(label));
     }
 
-    @PostMapping("/snapshots/{id}/replay")
-    public ApiResponse<SimulationState> replaySnapshot(@PathVariable String id) {
-        return snapshotService.getSnapshot(id)
-                .map(snapshot -> ApiResponse.success(snapshot.getState()))
-                .orElse(ApiResponse.error("Snapshot not found"));
+//    @PostMapping("/snapshots/{id}/replay")
+//    public ApiResponse<SimulationState> replaySnapshot(@PathVariable String id) {
+//        return snapshotService.getSnapshot(id)
+//                .map(snapshot -> ApiResponse.success(snapshot.getState()))
+//                .orElse(ApiResponse.error("SimulationSnapshot not found"));
+//    }
+    @PostMapping("/snapshots/{label}/replay")
+    public ApiResponse<SimulationState> replaySnapshot(@PathVariable String label) {
+        snapshotService.loadSnapshot(label);
+        SimulationState state = simulationService.getState();
+        return ApiResponse.success(state);
     }
 }
