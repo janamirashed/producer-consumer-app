@@ -1,5 +1,6 @@
 package com.producesconsumer.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
@@ -16,6 +17,7 @@ public class SimulationState {
     private List<Queue> queues;
     private List<Machine> machines;
     private List<Connection> connections;
+    @JsonProperty("isRunning")
     private boolean isRunning;
     private String simulationId;
 

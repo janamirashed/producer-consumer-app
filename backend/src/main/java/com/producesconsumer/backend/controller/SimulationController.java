@@ -12,6 +12,9 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 
 import java.util.List;
+import java.io.IOException;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import reactor.core.Disposable;
 
 /**
  * REST Controller for the Producer/Consumer simulation
@@ -28,9 +31,26 @@ public class SimulationController {
     // ==================== SSE Endpoint ====================
 
     @GetMapping(path = "/events", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<ServerSentEvent<SSE>> streamEvents() {
-        return eventService.getEventStream()
-                .map(event -> ServerSentEvent.<SSE>builder().data(event).build());
+    public SseEmitter streamEvents() {
+        SseEmitter emitter = new SseEmitter(0L); // Infinite timeout
+
+        Disposable subscription = eventService.getEventStream()
+                .subscribe(
+                        event -> {
+                            try {
+                                emitter.send(event);
+                            } catch (IOException e) {
+                                emitter.completeWithError(e);
+                            }
+                        },
+                        emitter::completeWithError,
+                        emitter::complete);
+
+        emitter.onCompletion(subscription::dispose);
+        emitter.onTimeout(subscription::dispose);
+        emitter.onError(e -> subscription.dispose());
+
+        return emitter;
     }
 
     // ==================== State ====================
