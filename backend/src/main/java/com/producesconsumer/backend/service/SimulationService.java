@@ -1,14 +1,13 @@
 package com.producesconsumer.backend.service;
 
 import com.producesconsumer.backend.model.*;
+import com.producesconsumer.backend.model.Queue;
 import com.producesconsumer.backend.observer.QueueEventObserver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.Executors;
@@ -30,12 +29,19 @@ public class SimulationService {
     private final MachineProcessingService machineProcessingService;
     private InputGenerator currentGenerator;
     private Future<?> generatorFuture;
+    private Map<String, Queue> queueMap = new TreeMap<>((s1, s2) -> {
+        int v1 = Integer.parseInt(s1.replace("Q", ""));
+        int v2 = Integer.parseInt(s2.replace("Q", ""));
+        return Integer.compare(v1, v2);
+    });
+
     private final ExecutorService generatorExecutor = Executors.newSingleThreadExecutor();
 
     private int queueCounter = 0;
     private int machineCounter = 0;
     private int connectionCounter = 0;
     private SimulationSnapshot liveSessionBackup;
+    private boolean inReplayMode = false;
 
     // ==================== State Access ====================
 
@@ -45,15 +51,45 @@ public class SimulationService {
 
     // ==================== Queue Operations ====================
 
+//    public Queue addQueue(double x, double y) {
+//        Queue queue = new Queue();
+//        queue.setId("Q" + (queueCounter++));
+//        queue.setX(x);
+//        queue.setY(y);
+//        state.getQueues().add(queue);
+//
+//        // register observer for this queue
+//        queueService.registerObserver(queueEventObserver);
+//        log.info("Queue observer registered for queue: {}", queue.getId());
+//
+//        log.info("Added queue: {}", queue.getId());
+//        broadcastState();
+//        return queue;
+//    }
+
     public Queue addQueue(double x, double y) {
         Queue queue = new Queue();
-        queue.setId("Q" + (queueCounter++));
+
+        int lastVal = -1;
+        int queueId;
+
+        for(Map.Entry<String, Queue> entry : queueMap.entrySet()) {
+            int curr_val = Integer.parseInt(entry.getKey().replace("Q",""));
+            if(curr_val - lastVal > 1) {
+                break;
+            }
+            lastVal = curr_val;
+        }
+        queueId = lastVal + 1;
+
+        queue.setId("Q" + queueId);
         queue.setX(x);
         queue.setY(y);
         state.getQueues().add(queue);
 
         // register observer for this queue
         queueService.registerObserver(queueEventObserver);
+        queueMap.put(queue.getId(), queue);
         log.info("Queue observer registered for queue: {}", queue.getId());
 
         log.info("Added queue: {}", queue.getId());
@@ -66,6 +102,7 @@ public class SimulationService {
         state.getConnections().removeIf(c -> c.getSourceId().equals(id) || c.getTargetId().equals(id));
 
         queueService.unregisterObserver(queueEventObserver);
+        queueMap.remove(id);
         log.info("Queue observer unregistered for queue: {}", id);
 
         log.info("Deleted queue: {}", id);
@@ -184,7 +221,7 @@ public class SimulationService {
         log.info("Simulation started");
 
         // Map setup for search
-        Map<String, Queue> queueMap = state.getQueues().stream().collect(Collectors.toMap(Queue::getId, q -> q));
+        queueMap = state.getQueues().stream().collect(Collectors.toMap(Queue::getId, q -> q));
 
         // Start machines(processing)
         for (Machine machine : state.getMachines()) {
@@ -239,8 +276,11 @@ public class SimulationService {
         broadcastState();
     }
 
+
+
     public SimulationState newSimulation() {
         stopSimulation();
+        queueMap.clear();
         state.getQueues().clear();
         state.getMachines().clear();
         state.getConnections().clear();
@@ -255,9 +295,16 @@ public class SimulationService {
 
     public void backupLiveState() {
         // Save current state including running status
+        if (this.inReplayMode)
+            return;
+        // do not update the liveSession since it's also a replay
         this.liveSessionBackup = state.saveToSnapshot("_internal_backup", true);
+        this.inReplayMode = true;
+        // next backup will consider state as a ReplayState
         log.info("Live session backed up");
     }
+
+
 
     public SimulationState restoreLiveState() {
         if (liveSessionBackup != null) {
@@ -279,6 +326,8 @@ public class SimulationService {
             return state;
         }
         log.warn("No live session backup found to restore");
+        this.inReplayMode = false;
+        //im not in Replay Mode anymore
         return state;
     }
 

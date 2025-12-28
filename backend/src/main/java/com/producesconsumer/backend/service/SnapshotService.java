@@ -15,12 +15,14 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Stream;
 
 
 /**
@@ -38,7 +40,7 @@ public class SnapshotService {
     @Autowired
     private SimulationService simulationService;
 
-    private ObjectMapper objectMapper = new ObjectMapper().setDefaultPrettyPrinter(new DefaultPrettyPrinter());
+    private ObjectMapper objectMapper = new ObjectMapper();
 
     private final String snapshotsDir = "snapshots";
 
@@ -57,6 +59,25 @@ public class SnapshotService {
         for (Map.Entry<String, SimulationSnapshot> entry : snapshots.entrySet()) {
             SnapshotInfo snapshotInfo = entry.getValue().getInfo();
             snapshotList.add(snapshotInfo);
+        }
+        Path path = Paths.get(snapshotsDir);
+        try (Stream<Path> stream = Files.list(path)) {
+            stream.filter(Files::isRegularFile)
+                    .forEach(filePath -> {
+                        String fullFileName = filePath.getFileName().toString();
+                        int lastDotIndex = fullFileName.lastIndexOf('.');
+                        String baseName = (lastDotIndex == -1) ? fullFileName : fullFileName.substring(0, lastDotIndex);
+
+                        if (!snapshots.containsKey(baseName)) {
+                            SnapshotInfo snapshotInfo = new SnapshotInfo();
+                            snapshotInfo.setTimestamp("Older");
+                            snapshotInfo.setId(baseName);
+                            snapshotInfo.setLabel(baseName);
+                            snapshotList.add(snapshotInfo);
+                        }
+                    });
+        } catch (IOException e) {
+            e.printStackTrace();
         }
         return snapshotList;
     }
@@ -77,7 +98,7 @@ public class SnapshotService {
         snapshots.put(snapshot.getLabel(), snapshot); // for faster access
         snapshotCounter++;
         try {
-            String snapshotString = objectMapper.writeValueAsString(snapshot);
+            String snapshotString = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(snapshot);
             Files.createDirectories(Path.of(snapshotsDir));
             Files.writeString(Path.of(snapshotsDir + "/" + snapshot.getLabel() + ".json"), snapshotString);
 
@@ -120,8 +141,4 @@ public class SnapshotService {
         log.info("Cleared all snapshots");
     }
 
-    private SimulationState deepCopyState(SimulationState state) {
-        // TODO: Implement proper deep copy
-        return state;
-    }
 }

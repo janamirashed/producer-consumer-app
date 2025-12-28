@@ -30,12 +30,18 @@ export class SnapshotListComponent {
     }
 
     formatDate(date: Date | string): string {
+
         const d = new Date(date);
-        return d.toLocaleString('en-US', {
+        let dateStr = d.toLocaleString('en-US', {
             month: 'short',
             day: 'numeric',
             hour: '2-digit',
             minute: '2-digit',
         });
+        if (dateStr == "Invalid Date") {
+            return "";
+        }
+        return dateStr;
+
     }
 }
