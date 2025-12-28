@@ -36,7 +36,7 @@ public class InputGenerator implements Runnable {
                 // Product random creation
                 Product product = new Product();
                 product.setId("PROD-" + System.nanoTime());
-                product.setColor(generateRandomHexColor());
+                product.setColor(getNextColor());
 
                 // Put product in target queue
                 queueService.addProductToQueue(targetQueue, product);
@@ -50,8 +50,24 @@ public class InputGenerator implements Runnable {
         log.info("InputGenerator Stopped");
     }
 
-    private String generateRandomHexColor() {
-        int nextInt = random.nextInt(0xffffff + 1);
-        return String.format("#%06x", nextInt);
+    // 10 predefined visible colors
+    private static final String[] COLORS = {
+            "#e74c3c", // Red
+            "#3498db", // Blue
+            "#130ac5ff", // Not HCI
+            "#f39c12", // Orange
+            "#9b59b6", // Purple
+            "#1abc9c", // Teal
+            "#e91e63", // Pink
+            "#00bcd4", // Cyan
+            "#ff9800", // Amber
+            "#ed0f9cff" // برجندي
+    };
+    private int colorIndex = 0;
+
+    private String getNextColor() {
+        String color = COLORS[colorIndex];
+        colorIndex = (colorIndex + 1) % COLORS.length;
+        return color;
     }
 }
