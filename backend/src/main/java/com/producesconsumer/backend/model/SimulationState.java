@@ -1,6 +1,7 @@
 package com.producesconsumer.backend.model;
 
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,6 +10,7 @@ import java.util.stream.Collectors;
 /**
  * Complete simulation state - pure data model
  */
+@Slf4j
 @Data
 public class SimulationState {
     private List<Queue> queues;
@@ -61,6 +63,7 @@ public class SimulationState {
             this.isRunning = snapshotState.isRunning();
         } else {
             this.isRunning = false; // standard snapshots are always paused
+            log.info("State {} has been preserved, running state: {}", snapshot.getId(), this.isRunning);
         }
 
         this.simulationId = snapshot.getId();

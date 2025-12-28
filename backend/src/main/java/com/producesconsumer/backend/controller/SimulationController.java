@@ -109,6 +109,7 @@ public class SimulationController {
 
     @PostMapping("/new")
     public ApiResponse<SimulationState> newSimulation() {
+        simulationService.stopSimulation();
         return ApiResponse.success(simulationService.newSimulation());
     }
 
