@@ -29,11 +29,11 @@ public class SimulationService {
     private final MachineProcessingService machineProcessingService;
     private InputGenerator currentGenerator;
     private Future<?> generatorFuture;
-    private Map<String, Queue> queueMap = new TreeMap<>((s1, s2) -> {
-        int v1 = Integer.parseInt(s1.replace("Q", ""));
-        int v2 = Integer.parseInt(s2.replace("Q", ""));
-        return Integer.compare(v1, v2);
-    });
+//    private Map<String, Queue> queueMap = new TreeMap<>((s1, s2) -> {
+//        int v1 = Integer.parseInt(s1.replace("Q", ""));
+//        int v2 = Integer.parseInt(s2.replace("Q", ""));
+//        return Integer.compare(v1, v2);
+//    });
 
     private final ExecutorService generatorExecutor = Executors.newSingleThreadExecutor();
 
@@ -72,24 +72,26 @@ public class SimulationService {
 
         int lastVal = -1;
         int queueId;
+        List<Queue> queues = this.state.getQueues();
 
-        for(Map.Entry<String, Queue> entry : queueMap.entrySet()) {
-            int curr_val = Integer.parseInt(entry.getKey().replace("Q",""));
-            if(curr_val - lastVal > 1) {
+        for (Queue value : queues) {
+            int curr_val = Integer.parseInt(value.getId().replace("Q", ""));
+            if (curr_val - lastVal > 1) {
                 break;
             }
             lastVal = curr_val;
         }
+
         queueId = lastVal + 1;
 
         queue.setId("Q" + queueId);
         queue.setX(x);
         queue.setY(y);
-        state.getQueues().add(queue);
+        state.getQueues().add(queueId, queue);
 
         // register observer for this queue
         queueService.registerObserver(queueEventObserver);
-        queueMap.put(queue.getId(), queue);
+//        queueMap.put(queue.getId(), queue);
         log.info("Queue observer registered for queue: {}", queue.getId());
 
         log.info("Added queue: {}", queue.getId());
@@ -98,11 +100,12 @@ public class SimulationService {
     }
 
     public void deleteQueue(String id) {
-        state.getQueues().removeIf(q -> q.getId().equals(id));
+//        state.getQueues().removeIf(q -> q.getId().equals(id));
         state.getConnections().removeIf(c -> c.getSourceId().equals(id) || c.getTargetId().equals(id));
 
         queueService.unregisterObserver(queueEventObserver);
-        queueMap.remove(id);
+//        queueMap.remove(id);
+        this.state.getQueues().removeIf(queue -> queue.getId().equals(id));
         log.info("Queue observer unregistered for queue: {}", id);
 
         log.info("Deleted queue: {}", id);
@@ -221,7 +224,7 @@ public class SimulationService {
         log.info("Simulation started");
 
         // Map setup for search
-        queueMap = state.getQueues().stream().collect(Collectors.toMap(Queue::getId, q -> q));
+        Map<String, Queue> queueMap = state.getQueues().stream().collect(Collectors.toMap(Queue::getId, q -> q));
 
         // Start machines(processing)
         for (Machine machine : state.getMachines()) {
@@ -280,7 +283,7 @@ public class SimulationService {
 
     public SimulationState newSimulation() {
         stopSimulation();
-        queueMap.clear();
+//        queueMap.clear();
         state.getQueues().clear();
         state.getMachines().clear();
         state.getConnections().clear();

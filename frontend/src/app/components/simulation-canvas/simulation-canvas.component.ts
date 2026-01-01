@@ -210,6 +210,7 @@ export class SimulationCanvasComponent implements AfterViewInit, OnDestroy {
 
         if (group) {
             group.set({ left: queue.x, top: queue.y });
+            group.setCoords();
             this.updateQueueLabel(group, queue);
         } else {
             group = this.createQueueObject(queue);
@@ -275,6 +276,7 @@ export class SimulationCanvasComponent implements AfterViewInit, OnDestroy {
 
         if (group) {
             group.set({ left: machine.x, top: machine.y });
+            group.setCoords();
             this.updateMachineAppearance(group, machine);
         } else {
             group = this.createMachineObject(machine);

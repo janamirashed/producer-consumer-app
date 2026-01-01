@@ -5,6 +5,8 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -48,6 +50,13 @@ public class SimulationState {
 
         // Deep copy queues
         this.queues = snapshotState.getQueues().stream()
+                .sorted(Comparator.comparingInt(q -> {
+                    try {
+                        return Integer.parseInt(q.getId().replace("Q", ""));
+                    } catch (NumberFormatException e) {
+                        return Integer.MAX_VALUE;
+                    }
+                }))
                 .map(this::deepCopyQueue)
                 .collect(Collectors.toCollection(ArrayList::new));
 
