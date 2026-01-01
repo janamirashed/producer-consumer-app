@@ -22,12 +22,14 @@ public class SimulationState {
     @JsonProperty("isRunning")
     private boolean isRunning;
     private String simulationId;
+    private int totalProductsGenerated; // Count all products that entered Q0
 
     public SimulationState() {
         this.queues = new ArrayList<>();
         this.machines = new ArrayList<>();
         this.connections = new ArrayList<>();
         this.isRunning = false;
+        this.totalProductsGenerated = 0;
     }
 
     /**
@@ -77,6 +79,9 @@ public class SimulationState {
             log.info("State {} has been preserved, running state: {}", snapshot.getId(), this.isRunning);
         }
 
+        // Copy totalProductsGenerated
+        this.totalProductsGenerated = snapshotState.getTotalProductsGenerated();
+
         this.simulationId = snapshot.getId();
     }
 
@@ -116,6 +121,9 @@ public class SimulationState {
         stateCopy.setConnections(this.connections.stream()
                 .map(this::deepCopyConnection)
                 .collect(Collectors.toCollection(ArrayList::new)));
+
+        // Copy totalProductsGenerated
+        stateCopy.setTotalProductsGenerated(this.totalProductsGenerated);
 
         snapshot.setState(stateCopy);
         return snapshot;

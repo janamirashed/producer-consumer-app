@@ -2,6 +2,7 @@ package com.producesconsumer.backend.service;
 
 import com.producesconsumer.backend.model.Product;
 import com.producesconsumer.backend.model.Queue;
+import com.producesconsumer.backend.model.SimulationState;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Random;
@@ -10,12 +11,14 @@ import java.util.Random;
 public class InputGenerator implements Runnable {
     private final Queue targetQueue;
     private final QueueService queueService;
+    private final SimulationState state; // Reference to update total count
     private volatile boolean running = true;
     private final Random random = new Random();
 
-    public InputGenerator(Queue targetQueue, QueueService queueService) {
+    public InputGenerator(Queue targetQueue, QueueService queueService, SimulationState state) {
         this.targetQueue = targetQueue;
         this.queueService = queueService;
+        this.state = state;
     }
 
     public void stop() {
@@ -38,9 +41,15 @@ public class InputGenerator implements Runnable {
                 product.setId("PROD-" + System.nanoTime());
                 product.setColor(getNextColor());
 
-                // Put product in target queue
+                // Increment total products generated counter BEFORE adding to queue
+                // so that any SSE events have the updated count
+                state.setTotalProductsGenerated(state.getTotalProductsGenerated() + 1);
+
+                // Put product in target queue (this publishes QUEUE_EVENT)
                 queueService.addProductToQueue(targetQueue, product);
-                log.info("Generated Product {} into Queue {}", product.getId(), targetQueue.getId());
+
+                log.info("Generated Product {} into Queue {} (Total: {})",
+                        product.getId(), targetQueue.getId(), state.getTotalProductsGenerated());
 
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
