@@ -1,0 +1,28 @@
+# === IDE / Editor ===
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+*.sublime-workspace
+
+# === Build Outputs ===
+out/
+target/
+dist/
+/tmp/
+
+# === Node ===
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# === Angular ===
+.angular/
+
+# === Maven Wrapper ===
+.mvn/wrapper/maven-wrapper.jar
+
+# === OS Files ===
+.DS_Store
+Thumbs.db
