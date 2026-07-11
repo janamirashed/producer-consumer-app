@@ -1,0 +1,263 @@
+{
+  "id" : null,
+  "timestamp" : "2026-01-01T21:18:00.264686800Z",
+  "label" : "Snapshot_1767302280252",
+  "state" : {
+    "queues" : [ {
+      "id" : "Q0",
+      "x" : 69.0,
+      "y" : 260.4399264694316,
+      "productCount" : 0,
+      "products" : [ ]
+    }, {
+      "id" : "Q1",
+      "x" : 370.0,
+      "y" : 77.69258756526993,
+      "productCount" : 2,
+      "products" : [ {
+        "id" : "PROD-28607354121400",
+        "color" : "#9b59b6"
+      }, {
+        "id" : "PROD-28611667277000",
+        "color" : "#e91e63"
+      } ]
+    }, {
+      "id" : "Q2",
+      "x" : 368.0,
+      "y" : 489.1237549342023,
+      "productCount" : 0,
+      "products" : [ ]
+    }, {
+      "id" : "Q3",
+      "x" : 707.0,
+      "y" : 88.67740028628512,
+      "productCount" : 0,
+      "products" : [ ]
+    }, {
+      "id" : "Q4",
+      "x" : 723.0,
+      "y" : 512.0919997145068,
+      "productCount" : 3,
+      "products" : [ {
+        "id" : "PROD-28595455499500",
+        "color" : "#ed0f9cff"
+      }, {
+        "id" : "PROD-28600031975800",
+        "color" : "#3498db"
+      }, {
+        "id" : "PROD-28604887328400",
+        "color" : "#f39c12"
+      } ]
+    }, {
+      "id" : "Q5",
+      "x" : 1055.0,
+      "y" : 65.70915550598065,
+      "productCount" : 3,
+      "products" : [ {
+        "id" : "PROD-28584511462700",
+        "color" : "#9b59b6"
+      }, {
+        "id" : "PROD-28588896027700",
+        "color" : "#e91e63"
+      }, {
+        "id" : "PROD-28593147753000",
+        "color" : "#ff9800"
+      } ]
+    }, {
+      "id" : "Q6",
+      "x" : 1036.0,
+      "y" : 480.1361808897353,
+      "productCount" : 0,
+      "products" : [ ]
+    }, {
+      "id" : "Q7",
+      "x" : 1396.0,
+      "y" : 257.44406845460935,
+      "productCount" : 4,
+      "products" : [ {
+        "id" : "PROD-28575478397700",
+        "color" : "#e74c3c"
+      }, {
+        "id" : "PROD-28580031448400",
+        "color" : "#130ac5ff"
+      }, {
+        "id" : "PROD-28577839233600",
+        "color" : "#3498db"
+      }, {
+        "id" : "PROD-28582307396600",
+        "color" : "#f39c12"
+      } ]
+    } ],
+    "machines" : [ {
+      "id" : "M1",
+      "x" : 212.0,
+      "y" : 145.59870256790927,
+      "state" : "processing",
+      "productCount" : 0,
+      "processingTime" : 4018,
+      "currentProductColor" : "#ff9800",
+      "inputQueueId" : null,
+      "outputQueueId" : null
+    }, {
+      "id" : "M2",
+      "x" : 200.0,
+      "y" : 457.16793610943074,
+      "state" : "processing",
+      "productCount" : 0,
+      "processingTime" : 4581,
+      "currentProductColor" : "#00bcd4",
+      "inputQueueId" : null,
+      "outputQueueId" : null
+    }, {
+      "id" : "M3",
+      "x" : 540.0,
+      "y" : 70.70225219735119,
+      "state" : "processing",
+      "productCount" : 0,
+      "processingTime" : 6059,
+      "currentProductColor" : "#130ac5ff",
+      "inputQueueId" : null,
+      "outputQueueId" : null
+    }, {
+      "id" : "M4",
+      "x" : 534.0,
+      "y" : 532.0643864799889,
+      "state" : "processing",
+      "productCount" : 0,
+      "processingTime" : 3867,
+      "currentProductColor" : "#1abc9c",
+      "inputQueueId" : null,
+      "outputQueueId" : null
+    }, {
+      "id" : "M5",
+      "x" : 887.0,
+      "y" : 477.14032287491295,
+      "state" : "processing",
+      "productCount" : 0,
+      "processingTime" : 6757,
+      "currentProductColor" : "#00bcd4",
+      "inputQueueId" : null,
+      "outputQueueId" : null
+    }, {
+      "id" : "M6",
+      "x" : 877.0,
+      "y" : 110.6470257283155,
+      "state" : "processing",
+      "productCount" : 0,
+      "processingTime" : 4846,
+      "currentProductColor" : "#e74c3c",
+      "inputQueueId" : null,
+      "outputQueueId" : null
+    }, {
+      "id" : "M7",
+      "x" : 1202.0,
+      "y" : 248.45649441014234,
+      "state" : "processing",
+      "productCount" : 0,
+      "processingTime" : 5389,
+      "currentProductColor" : "#1abc9c",
+      "inputQueueId" : null,
+      "outputQueueId" : null
+    } ],
+    "connections" : [ {
+      "id" : "C1",
+      "sourceId" : "Q0",
+      "sourceType" : "queue",
+      "targetId" : "M1",
+      "targetType" : "machine"
+    }, {
+      "id" : "C2",
+      "sourceId" : "M1",
+      "sourceType" : "machine",
+      "targetId" : "Q1",
+      "targetType" : "queue"
+    }, {
+      "id" : "C3",
+      "sourceId" : "Q1",
+      "sourceType" : "queue",
+      "targetId" : "M3",
+      "targetType" : "machine"
+    }, {
+      "id" : "C4",
+      "sourceId" : "M3",
+      "sourceType" : "machine",
+      "targetId" : "Q3",
+      "targetType" : "queue"
+    }, {
+      "id" : "C5",
+      "sourceId" : "Q0",
+      "sourceType" : "queue",
+      "targetId" : "M2",
+      "targetType" : "machine"
+    }, {
+      "id" : "C6",
+      "sourceId" : "M2",
+      "sourceType" : "machine",
+      "targetId" : "Q2",
+      "targetType" : "queue"
+    }, {
+      "id" : "C7",
+      "sourceId" : "Q2",
+      "sourceType" : "queue",
+      "targetId" : "M4",
+      "targetType" : "machine"
+    }, {
+      "id" : "C8",
+      "sourceId" : "M4",
+      "sourceType" : "machine",
+      "targetId" : "Q4",
+      "targetType" : "queue"
+    }, {
+      "id" : "C9",
+      "sourceId" : "Q4",
+      "sourceType" : "queue",
+      "targetId" : "M5",
+      "targetType" : "machine"
+    }, {
+      "id" : "C10",
+      "sourceId" : "Q3",
+      "sourceType" : "queue",
+      "targetId" : "M6",
+      "targetType" : "machine"
+    }, {
+      "id" : "C11",
+      "sourceId" : "Q3",
+      "sourceType" : "queue",
+      "targetId" : "M5",
+      "targetType" : "machine"
+    }, {
+      "id" : "C12",
+      "sourceId" : "M5",
+      "sourceType" : "machine",
+      "targetId" : "Q6",
+      "targetType" : "queue"
+    }, {
+      "id" : "C13",
+      "sourceId" : "Q6",
+      "sourceType" : "queue",
+      "targetId" : "M7",
+      "targetType" : "machine"
+    }, {
+      "id" : "C14",
+      "sourceId" : "M7",
+      "sourceType" : "machine",
+      "targetId" : "Q7",
+      "targetType" : "queue"
+    }, {
+      "id" : "C15",
+      "sourceId" : "M6",
+      "sourceType" : "machine",
+      "targetId" : "Q5",
+      "targetType" : "queue"
+    }, {
+      "id" : "C16",
+      "sourceId" : "Q5",
+      "sourceType" : "queue",
+      "targetId" : "M7",
+      "targetType" : "machine"
+    } ],
+    "simulationId" : null,
+    "running" : false,
+    "isRunning" : false
+  }
+}
