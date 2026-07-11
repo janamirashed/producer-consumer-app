@@ -1,0 +1,228 @@
+{
+  "id" : null,
+  "timestamp" : "2026-01-01T21:35:24.595848700Z",
+  "label" : "Snapshot_1767303324585",
+  "state" : {
+    "queues" : [ {
+      "id" : "Q0",
+      "x" : 85.0,
+      "y" : 281.4109325731879,
+      "productCount" : 0,
+      "products" : [ ]
+    }, {
+      "id" : "Q1",
+      "x" : 362.0,
+      "y" : 44.73814940222439,
+      "productCount" : 0,
+      "products" : [ ]
+    }, {
+      "id" : "Q2",
+      "x" : 390.0,
+      "y" : 486.12789691937996,
+      "productCount" : 0,
+      "products" : [ ]
+    }, {
+      "id" : "Q3",
+      "x" : 742.0,
+      "y" : 47.734007417046705,
+      "productCount" : 0,
+      "products" : [ ]
+    }, {
+      "id" : "Q4",
+      "x" : 757.0,
+      "y" : 486.12789691937996,
+      "productCount" : 0,
+      "products" : [ ]
+    }, {
+      "id" : "Q5",
+      "x" : 1158.0,
+      "y" : 54.724342784965465,
+      "productCount" : 0,
+      "products" : [ ]
+    }, {
+      "id" : "Q6",
+      "x" : 1157.0,
+      "y" : 453.1734587563344,
+      "productCount" : 0,
+      "products" : [ ]
+    }, {
+      "id" : "Q7",
+      "x" : 1311.0,
+      "y" : 249.45511374841647,
+      "productCount" : 0,
+      "products" : [ ]
+    } ],
+    "machines" : [ {
+      "id" : "M1",
+      "x" : 200.0,
+      "y" : 94.66911631592978,
+      "state" : "processing",
+      "productCount" : 0,
+      "processingTime" : 6434,
+      "currentProductColor" : "#f39c12",
+      "inputQueueId" : null,
+      "outputQueueId" : null
+    }, {
+      "id" : "M2",
+      "x" : 218.0,
+      "y" : 491.1209936107505,
+      "state" : "processing",
+      "productCount" : 0,
+      "processingTime" : 3817,
+      "currentProductColor" : "#9b59b6",
+      "inputQueueId" : null,
+      "outputQueueId" : null
+    }, {
+      "id" : "M3",
+      "x" : 550.0,
+      "y" : 42.74091072567617,
+      "state" : "idle",
+      "productCount" : 0,
+      "processingTime" : 3680,
+      "currentProductColor" : null,
+      "inputQueueId" : null,
+      "outputQueueId" : null
+    }, {
+      "id" : "M4",
+      "x" : 535.0,
+      "y" : 471.1486068452683,
+      "state" : "processing",
+      "productCount" : 0,
+      "processingTime" : 3530,
+      "currentProductColor" : "#130ac5ff",
+      "inputQueueId" : null,
+      "outputQueueId" : null
+    }, {
+      "id" : "M5",
+      "x" : 925.0,
+      "y" : 37.747814034305634,
+      "state" : "processing",
+      "productCount" : 0,
+      "processingTime" : 4589,
+      "currentProductColor" : "#e74c3c",
+      "inputQueueId" : null,
+      "outputQueueId" : null
+    }, {
+      "id" : "M6",
+      "x" : 943.0,
+      "y" : 489.1237549342023,
+      "state" : "processing",
+      "productCount" : 0,
+      "processingTime" : 4075,
+      "currentProductColor" : "#3498db",
+      "inputQueueId" : null,
+      "outputQueueId" : null
+    }, {
+      "id" : "M7",
+      "x" : 1180.0,
+      "y" : 231.4799656594825,
+      "state" : "idle",
+      "productCount" : 0,
+      "processingTime" : 6364,
+      "currentProductColor" : null,
+      "inputQueueId" : null,
+      "outputQueueId" : null
+    } ],
+    "connections" : [ {
+      "id" : "C1",
+      "sourceId" : "Q0",
+      "sourceType" : "queue",
+      "targetId" : "M1",
+      "targetType" : "machine"
+    }, {
+      "id" : "C2",
+      "sourceId" : "M1",
+      "sourceType" : "machine",
+      "targetId" : "Q1",
+      "targetType" : "queue"
+    }, {
+      "id" : "C3",
+      "sourceId" : "Q1",
+      "sourceType" : "queue",
+      "targetId" : "M3",
+      "targetType" : "machine"
+    }, {
+      "id" : "C4",
+      "sourceId" : "M3",
+      "sourceType" : "machine",
+      "targetId" : "Q3",
+      "targetType" : "queue"
+    }, {
+      "id" : "C5",
+      "sourceId" : "Q3",
+      "sourceType" : "queue",
+      "targetId" : "M5",
+      "targetType" : "machine"
+    }, {
+      "id" : "C6",
+      "sourceId" : "M5",
+      "sourceType" : "machine",
+      "targetId" : "Q5",
+      "targetType" : "queue"
+    }, {
+      "id" : "C7",
+      "sourceId" : "Q5",
+      "sourceType" : "queue",
+      "targetId" : "M7",
+      "targetType" : "machine"
+    }, {
+      "id" : "C8",
+      "sourceId" : "M7",
+      "sourceType" : "machine",
+      "targetId" : "Q7",
+      "targetType" : "queue"
+    }, {
+      "id" : "C9",
+      "sourceId" : "Q3",
+      "sourceType" : "queue",
+      "targetId" : "M6",
+      "targetType" : "machine"
+    }, {
+      "id" : "C10",
+      "sourceId" : "M6",
+      "sourceType" : "machine",
+      "targetId" : "Q6",
+      "targetType" : "queue"
+    }, {
+      "id" : "C11",
+      "sourceId" : "Q6",
+      "sourceType" : "queue",
+      "targetId" : "M7",
+      "targetType" : "machine"
+    }, {
+      "id" : "C12",
+      "sourceId" : "Q4",
+      "sourceType" : "queue",
+      "targetId" : "M6",
+      "targetType" : "machine"
+    }, {
+      "id" : "C13",
+      "sourceId" : "M4",
+      "sourceType" : "machine",
+      "targetId" : "Q4",
+      "targetType" : "queue"
+    }, {
+      "id" : "C14",
+      "sourceId" : "Q2",
+      "sourceType" : "queue",
+      "targetId" : "M4",
+      "targetType" : "machine"
+    }, {
+      "id" : "C15",
+      "sourceId" : "M2",
+      "sourceType" : "machine",
+      "targetId" : "Q2",
+      "targetType" : "queue"
+    }, {
+      "id" : "C16",
+      "sourceId" : "Q0",
+      "sourceType" : "queue",
+      "targetId" : "M2",
+      "targetType" : "machine"
+    } ],
+    "simulationId" : null,
+    "totalProductsGenerated" : 0,
+    "running" : false,
+    "isRunning" : false
+  }
+}

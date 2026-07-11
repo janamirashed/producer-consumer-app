@@ -144,11 +144,12 @@ export class SimulationService {
 
             case 'QUEUE_EVENT':
                 // Handle queue events from QueueEventObserver (PRODUCT_ADDED, PRODUCT_REMOVED, QUEUE_EMPTY)
-                const queueEvent = event.data as { eventType: string; queueId: string; productId: string | null; productColor: string | null; newQueueSize: number };
-                console.log('[SSE] QUEUE_EVENT:', queueEvent.eventType, 'queue:', queueEvent.queueId, 'newSize:', queueEvent.newQueueSize);
+                const queueEvent = event.data as { eventType: string; queueId: string; productId: string | null; productColor: string | null; newQueueSize: number; totalProductsGenerated: number };
+                console.log('[SSE] QUEUE_EVENT:', queueEvent.eventType, 'queue:', queueEvent.queueId, 'newSize:', queueEvent.newQueueSize, 'totalGenerated:', queueEvent.totalProductsGenerated);
                 console.log('[SSE] Current queues:', this._state().queues.map(q => ({ id: q.id, count: q.productCount })));
                 this._state.update((s) => ({
                     ...s,
+                    totalProductsGenerated: queueEvent.totalProductsGenerated,
                     queues: s.queues.map((q) =>
                         q.id === queueEvent.queueId
                             ? { ...q, productCount: queueEvent.newQueueSize }

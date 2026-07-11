@@ -50,6 +50,7 @@ export interface SimulationState {
     connections: Connection[];
     isRunning: boolean;
     simulationId?: string;
+    totalProductsGenerated?: number;  // Count of all products that entered Q0
 }
 
 /** Snapshot for replay functionality */

@@ -49,12 +49,10 @@ export class App implements OnInit, OnDestroy {
     return this.simulationService.snapshots;
   }
 
-  // Computed total products
+  // Computed total products - uses the counter from backend
   totalProducts = computed(() => {
     const state = this.simulationService.state();
-    const queueProducts = state.queues.reduce((sum, q) => sum + q.productCount, 0);
-    const machineProducts = state.machines.reduce((sum, m) => sum + m.productCount, 0);
-    return queueProducts + machineProducts;
+    return state.totalProductsGenerated ?? 0;
   });
 
   private subscriptions: Subscription[] = [];
@@ -85,6 +83,12 @@ export class App implements OnInit, OnDestroy {
   // ==================== Toolbar Handlers ====================
 
   onStart(): void {
+    // Check if Q0 exists before starting
+    const hasQ0 = this.simulationService.state().queues.some(q => q.id === 'Q0');
+    if (!hasQ0) {
+      alert('Cannot start simulation: Q0 (input queue) must be present. Please add at least one queue first.');
+      return;
+    }
     this.simulationService.startSimulation().subscribe();
   }
 

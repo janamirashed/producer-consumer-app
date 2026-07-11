@@ -5,6 +5,8 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,12 +22,14 @@ public class SimulationState {
     @JsonProperty("isRunning")
     private boolean isRunning;
     private String simulationId;
+    private int totalProductsGenerated; // Count all products that entered Q0
 
     public SimulationState() {
         this.queues = new ArrayList<>();
         this.machines = new ArrayList<>();
         this.connections = new ArrayList<>();
         this.isRunning = false;
+        this.totalProductsGenerated = 0;
     }
 
     /**
@@ -48,6 +52,13 @@ public class SimulationState {
 
         // Deep copy queues
         this.queues = snapshotState.getQueues().stream()
+                .sorted(Comparator.comparingInt(q -> {
+                    try {
+                        return Integer.parseInt(q.getId().replace("Q", ""));
+                    } catch (NumberFormatException e) {
+                        return Integer.MAX_VALUE;
+                    }
+                }))
                 .map(this::deepCopyQueue)
                 .collect(Collectors.toCollection(ArrayList::new));
 
@@ -67,6 +78,9 @@ public class SimulationState {
             this.isRunning = false; // standard snapshots are always paused
             log.info("State {} has been preserved, running state: {}", snapshot.getId(), this.isRunning);
         }
+
+        // Copy totalProductsGenerated
+        this.totalProductsGenerated = snapshotState.getTotalProductsGenerated();
 
         this.simulationId = snapshot.getId();
     }
@@ -107,6 +121,9 @@ public class SimulationState {
         stateCopy.setConnections(this.connections.stream()
                 .map(this::deepCopyConnection)
                 .collect(Collectors.toCollection(ArrayList::new)));
+
+        // Copy totalProductsGenerated
+        stateCopy.setTotalProductsGenerated(this.totalProductsGenerated);
 
         snapshot.setState(stateCopy);
         return snapshot;
